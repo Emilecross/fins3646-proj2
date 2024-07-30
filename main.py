@@ -1,5 +1,3 @@
-""" scaffold for project2
-"""
 from __future__ import annotations
 
 import os
@@ -14,109 +12,95 @@ from project2 import config as cfg
 from project2 import util
 
 
-def rename_cols(
-        df: pd.DataFrame,
-        prc_col: str = 'adj_close',
-        ) -> None:
-    """ Rename the columns of `df` in place.
+""" Rename the columns of df in place.
 
-    Normalise the names of columns in a dataframe such that they are in
-    snake case with no leading or trailing white spaces. The prc_col
-    parameter indicates which column should be renamed to 'price'.
-    This function should be used in read_dat and read_csv.
+Normalise the names of columns in a dataframe such that they are in
+snake case with no leading or trailing white spaces. The prc_col
+parameter indicates which column should be renamed to 'price'.
+This function should be used in read_dat and read_csv.
 
-    Parameters
-    ----------
-    df: frame
-        A data frame with daily prices (open, close, etc...) for different
-        tickers. 
-
-    prc_col: str
-        Which price to use (close, open, etc...). 
+Parameters
+----------
+df: frame
+    A data frame with daily prices (open, close, etc...) for different
+    tickers.
 
 
-
-    """
-    pass
-
-def read_dat(
-        pth,
-        prc_col: str = 'adj_close',
-        ) -> pd.DataFrame:
-    """ Returns a data frame with the relevant information from the .dat file
-    `pah`
+prc_col: str
+    Which price to use (close, open, etc...).
+"""
 
 
-    Parameters
-    ----------
-    pth: str
-        Location of the .dat file to be read
-
-    prc_col: str
-        Which price column to use (close, open, etc...)
+def rename_cols(df: pd.DataFrame, prc_col: str = "adj_close"):
+    df.columns = [
+        str(x).lower().strip().replace("-", "_").replace(" ", "_") for x in df.columns
+    ]
+    df.rename(columns={prc_col: "price"})
 
 
+""" Returns a data frame with the relevant information from the dat file
+Parameters
+----------
+pth: str
+    Location of the .dat file to be read
+prc_col: str
+    Which price column to use (close, open, etc...)
+Returns
+-------
+frame: 
+A dataframe with columns:
+    #   Column   
+---  ------   
+    0   date     
+    1   ticker   
+    2   price    
+"""
 
-    Returns
-    -------
-    frame: 
-        A dataframe with columns:
-    
-         #   Column   
-        ---  ------   
-         0   date     
-         1   ticker   
-         2   price    
+
+def read_dat(pth, prc_col: str = "adj_close"):
+    return pd.DataFrame()
 
 
+"""Returns a DF with the relevant information from the CSV file `pth`
 
-    """
-    pass
+Parameters
+----------
+pth: str
+    Location of the CSV file to be read
 
+ticker:
+    Relevant ticker
 
-
-def read_csv(
-        pth,
-        ticker: str,
-        prc_col: str = 'adj_close',
-        ) -> pd.DataFrame:
-    """ Returns a DF with the relevant information from the CSV file `pth`
-
-    Parameters
-    ----------
-    pth: str
-        Location of the CSV file to be read
-
-    ticker:
-        Relevant ticker
-
-    prc_col: str
-        Which price column to use (close, open, etc...)
+prc_col: str
+    Which price column to use (close, open, etc...)
 
 
 
-    Returns
-    -------
-    frame: 
-        A dataframe with columns:
-    
-         #   Column   
-        ---  ------   
-         0   date     
-         1   ticker   
-         2   price    
+Returns
+-------
+frame:
+    A dataframe with columns:
+
+        #   Column
+    ---  ------
+        0   date
+        1   ticker
+        2   price
 
 
-    """
-    pass
-    
+"""
+
+
+def read_csv(pth, ticker: str, prc_col: str = "adj_close"):
+    return pd.DataFrame()
+
 
 def read_files(
-        csv_tickers: list | None = None,
-        dat_files: list | None = None,
-        prc_col: str = 'adj_close',
-        ):
-    """ Read CSV and DAT files. If an observation [ticker, price] is
+    csv_tickers: list | None = None,
+    dat_files: list | None = None,
+    prc_col: str = "adj_close",
+):
+    """Read CSV and DAT files. If an observation [ticker, price] is
     present in both files, prioritize CSV
 
     Parameters
@@ -126,24 +110,24 @@ def read_files(
     dat_files: list, str, optional
 
     prc_col: str
-        Which price to use (close, open, etc...). 
+        Which price to use (close, open, etc...).
 
     Returns
     -------
-    frame: 
+    frame:
         A dataframe with columns:
-    
-         #   Column   
-        ---  ------   
-         0   date     
-         1   ticker   
-         2   price    
+
+         #   Column
+        ---  ------
+         0   date
+         1   ticker
+         2   price
     """
     pass
 
 
 def calc_monthly_ret_and_vol(df):
-    """ Compute monthly returns and volatility for each ticker in `df`.
+    """Compute monthly returns and volatility for each ticker in `df`.
 
     Parameters
     ----------
@@ -191,11 +175,11 @@ def calc_monthly_ret_and_vol(df):
 
 
 def main(
-        csv_tickers: list | None = None,
-        dat_files: list | None = None,
-        prc_col: str = 'adj_close',
-        ):
-    """ Perform the main analysis. Regressing month returns on lagged monthly
+    csv_tickers: list | None = None,
+    dat_files: list | None = None,
+    prc_col: str = "adj_close",
+):
+    """Perform the main analysis. Regressing month returns on lagged monthly
     volatility.
 
     Parameters
@@ -224,7 +208,3 @@ def main(
 
 if __name__ == "__main__":
     pass
-    
-
-
-

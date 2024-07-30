@@ -12,7 +12,7 @@ import pandas as pd
 import project2.config as cfg
 
 
-def csv_to_fobj(cnts, strip: bool = True) -> io.StringIO:
+def csv_to_fobj(cnts, strip: bool = True):
     """ Given a string mimicking the contents of a CSV file, 
     returns an object that behaves like a CSV file when passed to 
     the pandas.read_csv function
@@ -84,7 +84,7 @@ def csv_to_fobj(cnts, strip: bool = True) -> io.StringIO:
     return output
 
 
-def csv_to_df(cnts: str, *args, **kargs) -> pd.DataFrame:
+def csv_to_df(cnts: str, *args, **kargs):
     """ Given a string mimicking the contents of a CSV File, this function 
     will return a data frame as if using pandas.read_data frame
 
