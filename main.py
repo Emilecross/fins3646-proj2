@@ -12,87 +12,104 @@ from project2 import config as cfg
 from project2 import util
 
 
-""" Rename the columns of df in place.
-
-Normalise the names of columns in a dataframe such that they are in
-snake case with no leading or trailing white spaces. The prc_col
-parameter indicates which column should be renamed to 'price'.
-This function should be used in read_dat and read_csv.
-
-Parameters
-----------
-df: frame
-    A data frame with daily prices (open, close, etc...) for different
-    tickers.
-
-
-prc_col: str
-    Which price to use (close, open, etc...).
-"""
-
-
 def rename_cols(df: pd.DataFrame, prc_col: str = "adj_close"):
+    """ Rename the columns of df in place.
+
+    Normalise the names of columns in a dataframe such that they are in
+    snake case with no leading or trailing white spaces. The prc_col
+    parameter indicates which column should be renamed to 'price'.
+    This function should be used in read_dat and read_csv.
+
+    Parameters
+    ----------
+    df: frame
+        A data frame with daily prices (open, close, etc...) for different
+        tickers.
+
+
+    prc_col: str
+        Which price to use (close, open, etc...).
+    """
     df.columns = [
         str(x).lower().strip().replace("-", "_").replace(" ", "_") for x in df.columns
     ]
     df.rename(columns={prc_col: "price"})
 
-
-""" Returns a data frame with the relevant information from the dat file
-Parameters
-----------
-pth: str
-    Location of the .dat file to be read
-prc_col: str
-    Which price column to use (close, open, etc...)
-Returns
--------
-frame: 
-A dataframe with columns:
-    #   Column   
----  ------   
-    0   date     
-    1   ticker   
-    2   price    
-"""
-
-
 def read_dat(pth, prc_col: str = "adj_close"):
-    return pd.DataFrame()
-
-
-"""Returns a DF with the relevant information from the CSV file `pth`
-
-Parameters
-----------
-pth: str
-    Location of the CSV file to be read
-
-ticker:
-    Relevant ticker
-
-prc_col: str
-    Which price column to use (close, open, etc...)
-
-
-
-Returns
--------
-frame:
+    """ Returns a data frame with the relevant information from the dat file
+    Parameters
+    ----------
+    pth: str
+        Location of the .dat file to be read
+    prc_col: str
+        Which price column to use (close, open, etc...)
+    Returns
+    -------
+    frame: 
     A dataframe with columns:
-
-        #   Column
-    ---  ------
-        0   date
-        1   ticker
-        2   price
-
-
-"""
+        #   Column   
+    ---  ------   
+        0   date     
+        1   ticker   
+        2   price    
+    """
+    rtn_data = []
+    TEMPLATE = {"Ticker": "TMP",
+                'Volume': 14,
+                'Date': "01-01-2001",
+                'Adj Close': 19,
+                'Close': 10,
+                'Open': 6,
+                'High': 20}
+    with open(pth) as tic_data:
+        for data_point in tic_data:
+            row = None
+            if len(data_point.split(",")) == 7:
+                row = data_point.split(",")
+            elif len(data_point.split("\t")) == 7:
+                row = data_point.split("\t")
+            elif len(data_point.split(" ")) == 7:
+                row = data_point.split(" ")
+            if row:
+                insert = TEMPLATE
+                for i, k in enumerate(insert.items()):
+                    insert[k] = row[i].strip('\'\" ')
+                insert["Volume"] = float(insert["Volume"])
+                insert["Adj Close"] = float(insert["Adj Close"])
+                insert["Close"] = float(insert["Close"])
+                insert["Open"] = float(insert["Open"])
+                insert["High"] = float(insert["High"])
+                insert["Date"] = pd.to_datetime(insert["Date"])
+                rtn_data.append(row)
+    df = pd.DataFrame(rtn_data)
+    rename_cols(df, prc_col)
+    return df
 
 
 def read_csv(pth, ticker: str, prc_col: str = "adj_close"):
-    return pd.DataFrame()
+    """Returns a DF with the relevant information from the CSV file `pth`
+
+    Parameters
+    ----------
+    pth: str
+        Location of the CSV file to be read
+    ticker:
+        Relevant ticker
+    prc_col: str
+        Which price column to use (close, open, etc...)
+    Returns
+    -------
+    frame:
+        A dataframe with columns:
+            #   Column
+        ---  ------
+            0   date
+            1   ticker
+            2   price
+    """
+    df = pd.read_csv(pth)
+    rename_cols(df, prc_col)
+    return df
 
 
 def read_files(
