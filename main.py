@@ -151,6 +151,17 @@ def read_files(
             if os.path.exists(csv_file):
                 csv_data = pd.read.csv(csv_file)
                 all_data = pd.concat([all_data, csv_data], ignore_index=True)
+
+    # Remove all duplicates, prioritising CSV data
+    all_data = all_data.drop_duplicates(subset=['ticker',prc_coll], keep='first')
+
+    # Select relevant columns
+    all_data = all_data[['date', 'ticker', prc_col]]
+    all_data = all_data.rename(columns={prc_col: 'price'})
+
+    return all_data
+
+
     pass
 
 
