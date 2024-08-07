@@ -140,6 +140,17 @@ def read_files(
          1   ticker
          2   price
     """
+    # Initialise an empty DataFrame
+    all_data = pd.DataFrame()
+
+    # Read CSV files
+    if csv_tickers:
+        if isinstance(csv_tickers, str):
+            csv_tickers = [csv_tickers]
+        for csv_file in csv_tickers:
+            if os.path.exists(csv_file):
+                csv_data = pd.read.csv(csv_file)
+                all_data = pd.concat([all_data, csv_data], ignore_index=True)
     pass
 
 
