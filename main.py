@@ -71,10 +71,12 @@ def read_dat(pth, prc_col: str = "adj_close"):
                 row = data_point.split("\t")
             elif len(data_point.split(" ")) == 7:
                 row = data_point.split(" ")
+
             if row:
                 insert = TEMPLATE.copy()
                 for i, k in enumerate(insert.items()):
                     insert[k] = row[i].strip('\'\" ')
+
                 insert["Ticker"] = str(insert["Ticker"])
                 insert["Volume"] = float(insert["Volume"])
                 insert["Adj Close"] = float(insert["Adj Close"])
@@ -111,7 +113,9 @@ def read_csv(pth, ticker: str, prc_col: str = "adj_close"):
     """
     df = pd.read_csv(pth)
     rename_cols(df, prc_col)
+    df["ticker"] = ticker
     return_df = df[["ticker", "date", "price"]]
+    df["date"] = pd.to_datetime(df["date"])
     return return_df
 
 
@@ -146,24 +150,26 @@ def read_files(
     # Initialise an empty DataFrame
     df_list = []
 
-    for ticker in csv_tickers:
-        if ticker.endswith("_prc.csv"):
-            ticker = ticker.split("_")[0]
-        ticker = ticker.lower()
-        pth = os.path.join(cfg.DATADIR ,f"{ticker}_prc.csv")
-        df_list.append(read_csv(pth, ticker, prc_col))
+    if csv_tickers:
+        for ticker in csv_tickers:
+            if ticker.endswith("_prc.csv"):
+                ticker = ticker.split("_")[0]
+            ticker = ticker.lower()
+            pth = os.path.join(cfg.DATADIR ,f"{ticker}_prc.csv")
+            df_list.append(read_csv(pth, ticker, prc_col))
 
-    for dat_name in dat_files:
-        if dat_name.endswith(".dat"):
-            dat_name = dat_name.split(".")[0]
-        dat_name = dat_name.lower()
-        pth = os.path.join(cfg.DATADIR ,f"{dat_name}.dat")
-        df_list.append(read_dat(pth, prc_col))
+    if dat_files:
+        for dat_name in dat_files:
+            if dat_name.endswith(".dat"):
+                dat_name = dat_name.split(".")[0]
+            dat_name = dat_name.lower()
+            pth = os.path.join(cfg.DATADIR ,f"{dat_name}.dat")
+            df_list.append(read_dat(pth, prc_col))
 
     return pd.concat(df_list).drop_duplicates()
 
 
-def calc_monthly_ret_and_vol(df):
+def calc_monthly_ret_and_vol(df: pd.DataFrame):
     """Compute monthly returns and volatility for each ticker in `df`.
     Parameters
     ----------
@@ -197,7 +203,27 @@ def calc_monthly_ret_and_vol(df):
     -----
     Assume no gaps in the daily time series of each ticker
     """
-    pass
+    df['date'] = pd.to_datetime(df['date'])
+    df.set_index('date', inplace=True)
+
+    monthly_stats = []
+
+    for ticker, ticker_df in df.groupby("ticker"):
+        monthly_prices = ticker_df['price'].resample('ME').last()
+        monthly_returns = monthly_prices.pct_change().dropna()
+
+        daily_returns = ticker_df['price'].pct_change().dropna()
+        monthly_volatility = daily_returns.resample('ME').std() * np.sqrt(21)
+
+        for date in monthly_returns.index:
+            monthly_stats.append({
+                "mdate": date.strftime("%Y-%m"),
+                "ticker": ticker.upper(),
+                "mret": monthly_returns[date],
+                "mvol": monthly_volatility.loc[date]
+            })
+
+    return pd.DataFrame(monthly_stats)
 
 
 def main(
@@ -233,4 +259,4 @@ def main(
 
 
 if __name__ == "__main__":
-    pass
+    print(calc_monthly_ret_and_vol(read_files(csv_tickers=["tsla"])))
