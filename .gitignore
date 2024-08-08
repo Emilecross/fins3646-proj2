@@ -1,6 +1,6 @@
 *.json
-*.csv
-*.dat
+# *.csv
+# *.dat
 __pycache__/
 DS.Store
 .idea/
