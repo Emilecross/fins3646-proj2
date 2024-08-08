@@ -31,7 +31,7 @@ def rename_cols(df: pd.DataFrame, prc_col: str = "adj_close"):
     df.columns = [
         str(x).lower().strip().replace("-", "_").replace(" ", "_") for x in df.columns
     ]
-    df.rename(columns={prc_col: "price"})
+    df.rename(columns={prc_col: "price"}, inplace=True)
 
 def read_dat(pth, prc_col: str = "adj_close"):
     """ Returns a data frame with the relevant information from the dat file
@@ -69,7 +69,7 @@ def read_dat(pth, prc_col: str = "adj_close"):
             elif len(data_point.split(" ")) == 7:
                 row = data_point.split(" ")
             if row:
-                insert = TEMPLATE
+                insert = TEMPLATE.copy()
                 for i, k in enumerate(insert.items()):
                     insert[k] = row[i].strip('\'\" ')
                 insert["Volume"] = float(insert["Volume"])
@@ -78,11 +78,10 @@ def read_dat(pth, prc_col: str = "adj_close"):
                 insert["Open"] = float(insert["Open"])
                 insert["High"] = float(insert["High"])
                 insert["Date"] = pd.to_datetime(insert["Date"])
-                rtn_data.append(row)
+                rtn_data.append(insert)
     df = pd.DataFrame(rtn_data)
     rename_cols(df, prc_col)
     return df
-
 
 def read_csv(pth, ticker: str, prc_col: str = "adj_close"):
     """Returns a DF with the relevant information from the CSV file `pth`
