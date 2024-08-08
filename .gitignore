@@ -1,0 +1,9 @@
+*.json
+*.csv
+*.dat
+__pycache__/
+DS.Store
+.idea/
+toolkit_config.py
+config.py
+util.py
