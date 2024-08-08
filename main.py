@@ -8,8 +8,8 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
 
-from project2 import config as cfg
-from project2 import util
+import config as cfg
+import util
 
 
 def rename_cols(df: pd.DataFrame, prc_col: str = "adj_close"):
