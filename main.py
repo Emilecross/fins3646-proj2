@@ -151,49 +151,39 @@ def read_files(
             ticker = ticker.split("_")[0]
         ticker = ticker.lower()
         pth = os.path.join(cfg.DATADIR ,f"{ticker}_prc.csv")
-        append_df = read_csv(pth, ticker, prc_col)
-        append_df['Source'] = 'CSV'
-        df_list.append(append_df)
+        df_list.append(read_csv(pth, ticker, prc_col))
 
     for dat_name in dat_files:
         if dat_name.endswith(".dat"):
             dat_name = dat_name.split(".")[0]
         dat_name = dat_name.lower()
         pth = os.path.join(cfg.DATADIR ,f"{dat_name}.dat")
-        append_df = read_dat(pth, prc_col)
-        append_df['Source'] = 'DAT'
-        df_list.append(append_df)
+        df_list.append(read_dat(pth, prc_col))
 
     return pd.concat(df_list).drop_duplicates()
 
 
 def calc_monthly_ret_and_vol(df):
     """Compute monthly returns and volatility for each ticker in `df`.
-
     Parameters
     ----------
     df: frame
         A data frame with columns
-
          #   Column
         ---  ------
          0   date
          1   ticker
          2   price
-
-
     Returns
     -------
     frame:
         A data frame with columns
-
          #   Column
         ---  ------
          0   mdate
          1   ticker
          2   mret
          3   mvol
-
         where
             mdate is a string with format YYYY-MM
 
@@ -203,14 +193,9 @@ def calc_monthly_ret_and_vol(df):
 
             mvol is the monthly volatility. Computed as the
                 standard deviation of daily returns * sqrt(21)
-
-
     Notes
     -----
     Assume no gaps in the daily time series of each ticker
-
-
-
     """
     pass
 
