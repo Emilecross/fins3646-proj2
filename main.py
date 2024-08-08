@@ -57,24 +57,30 @@ def read_dat(pth, prc_col: str = "adj_close"):
     rtn_data = []
     TEMPLATE = {"Ticker": "TMP",
                 'Volume': 14,
-                'Date': "01-01-2001",
-                'Adj Close': 19,
-                'Close': 10,
                 'Open': 6,
-                'High': 20}
+                'Close': 10,
+                'High': 20,
+                'Low': 20,
+                'Adj Close': 19,
+                'Date': "01-01-2001"}
     with open(pth) as tic_data:
+        first = True
         for data_point in tic_data:
+            if first:
+                first = False
+                continue
+
             row = None
-            if len(data_point.split(",")) == 7:
+            if len(data_point.split(",")) == 8:
                 row = data_point.split(",")
-            elif len(data_point.split("\t")) == 7:
+            elif len(data_point.split("\t")) == 8:
                 row = data_point.split("\t")
-            elif len(data_point.split(" ")) == 7:
+            elif len(data_point.split(" ")) == 8:
                 row = data_point.split(" ")
 
             if row:
                 insert = TEMPLATE.copy()
-                for i, k in enumerate(insert.items()):
+                for i, k in enumerate(insert.keys()):
                     insert[k] = row[i].strip('\'\" ')
 
                 insert["Ticker"] = str(insert["Ticker"])
@@ -85,6 +91,7 @@ def read_dat(pth, prc_col: str = "adj_close"):
                 insert["High"] = float(insert["High"])
                 insert["Date"] = pd.to_datetime(insert["Date"])
                 rtn_data.append(insert)
+
     df = pd.DataFrame(rtn_data)
     rename_cols(df, prc_col)
     return_df = df[["ticker", "date", "price"]]
@@ -257,6 +264,10 @@ def main(
     """
     pass
 
+def test_step_1_2():
+    result = pd.read_csv(os.path.join(cfg.DATADIR, 'res.csv')).equals(pd.read_csv(os.path.join(cfg.DATADIR, 'sample.csv')))
+    print(f'Dataframes are the same: {result}')
 
 if __name__ == "__main__":
-    print(calc_monthly_ret_and_vol(read_files(csv_tickers=["tsla"])))
+    calc_monthly_ret_and_vol(read_files(csv_tickers=["tsla"], dat_files=["data1"])).to_csv(os.path.join(cfg.DATADIR, 'res.csv'), index=False)
+    # test_step_1_2()
