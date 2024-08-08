@@ -1,5 +1,6 @@
 *.json
 *.csv
 *.dat
-
+__pycache__/
+DS.Store
 
