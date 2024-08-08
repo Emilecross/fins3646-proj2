@@ -7,8 +7,11 @@ import pandas as pd
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
-from project2 import config as cfg
-from project2 import util
+# from project2 import config as cfg
+# from project2 import util
+
+import config as cfg
+import util
 
 def rename_cols(df: pd.DataFrame, prc_col: str = "adj_close"):
     """ Rename the columns of df in place.
@@ -72,6 +75,7 @@ def read_dat(pth, prc_col: str = "adj_close"):
                 insert = TEMPLATE.copy()
                 for i, k in enumerate(insert.items()):
                     insert[k] = row[i].strip('\'\" ')
+                insert["Ticker"] = str(insert["Ticker"])
                 insert["Volume"] = float(insert["Volume"])
                 insert["Adj Close"] = float(insert["Adj Close"])
                 insert["Close"] = float(insert["Close"])
@@ -81,7 +85,8 @@ def read_dat(pth, prc_col: str = "adj_close"):
                 rtn_data.append(insert)
     df = pd.DataFrame(rtn_data)
     rename_cols(df, prc_col)
-    return df
+    return_df = df[["ticker", "date", "price"]]
+    return return_df
 
 def read_csv(pth, ticker: str, prc_col: str = "adj_close"):
     """Returns a DF with the relevant information from the CSV file `pth`
@@ -106,12 +111,13 @@ def read_csv(pth, ticker: str, prc_col: str = "adj_close"):
     """
     df = pd.read_csv(pth)
     rename_cols(df, prc_col)
-    return df
+    return_df = df[["ticker", "date", "price"]]
+    return return_df
 
 
 def read_files(
-    csv_tickers: list | None = None,
-    dat_files: list | None = None,
+    csv_tickers: list[str] | None = None,
+    dat_files: list[str] | None = None,
     prc_col: str = "adj_close",
 ):
     """Read CSV and DAT files. If an observation [ticker, price] is
@@ -138,28 +144,27 @@ def read_files(
          2   price
     """
     # Initialise an empty DataFrame
-    all_data = pd.DataFrame()
+    df_list = []
 
-    # Read CSV files
-    if csv_tickers:
-        if isinstance(csv_tickers, str):
-            csv_tickers = [csv_tickers]
-        for csv_file in csv_tickers:
-            if os.path.exists(csv_file):
-                csv_data = pd.read.csv(csv_file)
-                all_data = pd.concat([all_data, csv_data], ignore_index=True)
+    for ticker in csv_tickers:
+        if ticker.endswith("_prc.csv"):
+            ticker = ticker.split("_")[0]
+        ticker = ticker.lower()
+        pth = os.path.join(cfg.DATADIR ,f"{ticker}_prc.csv")
+        append_df = read_csv(pth, ticker, prc_col)
+        append_df['Source'] = 'CSV'
+        df_list.append(append_df)
 
-    # Remove all duplicates, prioritising CSV data
-    all_data = all_data.drop_duplicates(subset=['ticker',prc_coll], keep='first')
+    for dat_name in dat_files:
+        if dat_name.endswith(".dat"):
+            dat_name = dat_name.split(".")[0]
+        dat_name = dat_name.lower()
+        pth = os.path.join(cfg.DATADIR ,f"{dat_name}.dat")
+        append_df = read_dat(pth, prc_col)
+        append_df['Source'] = 'DAT'
+        df_list.append(append_df)
 
-    # Select relevant columns
-    all_data = all_data[['date', 'ticker', prc_col]]
-    all_data = all_data.rename(columns={prc_col: 'price'})
-
-    return all_data
-
-
-    pass
+    return pd.concat(df_list).drop_duplicates()
 
 
 def calc_monthly_ret_and_vol(df):
