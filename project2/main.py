@@ -7,10 +7,8 @@ import pandas as pd
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
-
-import config as cfg
-import util
-
+from project2 import config as cfg
+from project2 import util
 
 def rename_cols(df: pd.DataFrame, prc_col: str = "adj_close"):
     """ Rename the columns of df in place.
