@@ -1,7 +1,5 @@
 *.json
 *.csv
 *.dat
-__pycache__/
-.DS_Store
 
 
