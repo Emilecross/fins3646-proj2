@@ -13,6 +13,7 @@ import statsmodels.formula.api as smf
 import config as cfg
 import util
 
+
 def rename_cols(df: pd.DataFrame, prc_col: str = "adj_close"):
     """ Rename the columns of df in place.
 
@@ -36,6 +37,7 @@ def rename_cols(df: pd.DataFrame, prc_col: str = "adj_close"):
     ]
     df.rename(columns={prc_col: "price"}, inplace=True)
 
+
 def read_dat(pth, prc_col: str = "adj_close"):
     """ Returns a data frame with the relevant information from the dat file
     Parameters
@@ -55,7 +57,7 @@ def read_dat(pth, prc_col: str = "adj_close"):
         2   price    
     """
     rtn_data = []
-    TEMPLATE = {"Ticker": "TMP",
+    template = {"Ticker": "TMP",
                 'Volume': 14,
                 'Date': "01-01-2001",
                 'Adj Close': 19,
@@ -72,7 +74,7 @@ def read_dat(pth, prc_col: str = "adj_close"):
             elif len(data_point.split(" ")) == 7:
                 row = data_point.split(" ")
             if row:
-                insert = TEMPLATE.copy()
+                insert = template.copy()
                 for i, k in enumerate(insert.items()):
                     insert[k] = row[i].strip('\'\" ')
                 insert["Volume"] = float(insert["Volume"])
@@ -85,6 +87,7 @@ def read_dat(pth, prc_col: str = "adj_close"):
     df = pd.DataFrame(rtn_data)
     rename_cols(df, prc_col)
     return df
+
 
 def read_csv(pth, ticker: str, prc_col: str = "adj_close"):
     """Returns a DF with the relevant information from the CSV file `pth`
@@ -109,16 +112,16 @@ def read_csv(pth, ticker: str, prc_col: str = "adj_close"):
     """
     df = pd.read_csv(pth)
     rename_cols(df, prc_col)
-    df["ticker"]=ticker
+    df["ticker"] = ticker
     return_df = df[["ticker", "date", "price"]]
     df["date"] = pd.to_datetime(df["date"])
     return return_df
 
 
 def read_files(
-    csv_tickers: list | None = None,
-    dat_files: list | None = None,
-    prc_col: str = "adj_close",
+        csv_tickers: list | None = None,
+        dat_files: list | None = None,
+        prc_col: str = "adj_close",
 ):
     """Read CSV and DAT files. If an observation [ticker, price] is
     present in both files, prioritize CSV
@@ -210,17 +213,39 @@ def calc_monthly_ret_and_vol(df):
     Notes
     -----
     Assume no gaps in the daily time series of each ticker
-
-
-
     """
+    df['date'] = pd.to_datetime(df['date'])
+    df.set_index('date', inplace=True)
+
+    monthly_stats = []
+
+    for ticker, ticker_df in df.groupby("ticker"):
+        # Resample to get monthly prices and calculate monthly returns
+        monthly_prices = ticker_df['price'].resample('M').last()
+        monthly_returns = monthly_prices.pct_change().dropna()
+
+        # Calculate daily returns and monthly volatility
+        daily_returns = ticker_df['price'].pct_change().dropna()
+        monthly_volatility = daily_returns.resample('M').std() * np.sqrt(21)
+
+        # Create the list of results
+        for date in monthly_returns.index:
+            monthly_stats.append({
+                "mdate": date.strftime("%Y-%m"),
+                "ticker": ticker.upper(),
+                "mret": monthly_returns.loc[date],
+                "mvol": monthly_volatility.loc[date]
+            })
+
+    return pd.DataFrame(monthly_stats)
+
     pass
 
 
 def main(
-    csv_tickers: list | None = None,
-    dat_files: list | None = None,
-    prc_col: str = "adj_close",
+        csv_tickers: list | None = None,
+        dat_files: list | None = None,
+        prc_col: str = "adj_close",
 ):
     """Perform the main analysis. Regressing month returns on lagged monthly
     volatility.
@@ -246,8 +271,27 @@ def main(
     The function should print the summary results of a linear regression provided by
     the statsmodels package.
     """
+    # Step 1: Read the data
+    df = util.read_files(csv_tickers=csv_tickers, dat_files=dat_files, prc_col=prc_col)
+
+    # Step 2: Calculate monthly returns and volatility
+    monthly_data = util.calc_monthly_ret_and_vol(df)
+
+    # Step 3: Perform regression
+    model = smf.ols(formula="mret ~ mvol", data=monthly_data).fit()
+
+    # Step 4: Print the summary of the regression
+    print(model.summary())
     pass
 
 
+def test_step_1_2():
+    result = pd.read_csv(os.path.join(cfg.DATADIR, 'res.csv')).equals(
+        pd.read_csv(os.path.join(cfg.DATADIR, 'sample.csv')))
+    print(f'Dataframes are the same: {result}')
+
+
 if __name__ == "__main__":
+    # calc_monthly_ret_and_vol(read_files(csv_tickers=["tsla"], dat_files=["data1"])).to_csv(os.path.join(
+    # cfg.DATADIR,'res.csv'),index=False) test_step_1_2()
     pass
