@@ -56,14 +56,17 @@ def read_dat(pth, prc_col: str = "adj_close"):
         1   ticker   
         2   price    
     """
-    rtn_data = []
-    template = {"Ticker": "TMP",
-                'Volume': 14,
-                'Date': "01-01-2001",
-                'Adj Close': 19,
-                'Close': 10,
-                'Open': 6,
-                'High': 20}
+    rtn_data: list[dict[str, Any]] = []
+    template = {
+        "Ticker": "TMP",
+        "Volume": 14,
+        "Date": "01-01-2001",
+        "Adj Close": 19,
+        "Close": 10,
+        "Open": 6,
+        "High": 20
+    }
+
     with open(pth) as tic_data:
         for data_point in tic_data:
             row = None
@@ -73,19 +76,27 @@ def read_dat(pth, prc_col: str = "adj_close"):
                 row = data_point.split("\t")
             elif len(data_point.split(" ")) == 7:
                 row = data_point.split(" ")
+
             if row:
-                insert = template.copy()
-                for i, k in enumerate(insert.items()):
-                    insert[k] = row[i].strip('\'\" ')
-                insert["Volume"] = float(insert["Volume"])
-                insert["Adj Close"] = float(insert["Adj Close"])
-                insert["Close"] = float(insert["Close"])
-                insert["Open"] = float(insert["Open"])
-                insert["High"] = float(insert["High"])
-                insert["Date"] = pd.to_datetime(insert["Date"])
+                insert = template.copy()  # Here, template is being used
+                for k, v in zip(insert.keys(), row):
+                    insert[k] = v.strip('"\'')
+
+                    if k in ["Volume", "Adj Close", "Close", "Open", "High"]:
+                        # Convert to float if it's a valid numeric string
+                        if insert[k].replace('.', '', 1).isdigit():
+                            insert[k] = float(insert[k])
+
+                    elif k == "Date":
+                        # Convert to datetime
+                        insert[k] = pd.to_datetime(insert[k]) if isinstance(insert[k], str) else insert[k]
+
                 rtn_data.append(insert)
+
+    # Construct DataFrame
     df = pd.DataFrame(rtn_data)
     rename_cols(df, prc_col)
+
     return df
 
 
@@ -164,7 +175,7 @@ def read_files(
                 dat_name = dat_name.split(".")[0]
             dat_name = dat_name.lower()
             pth = os.path.join(cfg.DATADIR, f"{dat_name}.dat")
-            df_list.append(read_dat(prc, prc_col))
+            df_list.append(read_dat(pth, prc_col))
 
     # Combine all dataframes and drop duplicates
     return pd.concat(df_list).drop_duplicates(subset=['ticker', prc_col], keep='first')
