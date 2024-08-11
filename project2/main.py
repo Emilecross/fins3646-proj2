@@ -7,8 +7,11 @@ import pandas as pd
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
-from project2 import config as cfg
-from project2 import util
+# from project2 import config as cfg
+# from project2 import util
+
+import config as cfg
+import util
 
 def rename_cols(df: pd.DataFrame, prc_col: str = "adj_close"):
     """ Rename the columns of df in place.
@@ -106,7 +109,10 @@ def read_csv(pth, ticker: str, prc_col: str = "adj_close"):
     """
     df = pd.read_csv(pth)
     rename_cols(df, prc_col)
-    return df
+    df["ticker"]=ticker
+    return_df = df[["ticker", "date", "price"]]
+    df["date"] = pd.to_datetime(df["date"])
+    return return_df
 
 
 def read_files(
@@ -137,27 +143,28 @@ def read_files(
          1   ticker
          2   price
     """
-    # Initialise an empty DataFrame
-    all_data = pd.DataFrame()
+    df_list = []
 
     # Read CSV files
     if csv_tickers:
-        if isinstance(csv_tickers, str):
-            csv_tickers = [csv_tickers]
-        for csv_file in csv_tickers:
-            if os.path.exists(csv_file):
-                csv_data = pd.read.csv(csv_file)
-                all_data = pd.concat([all_data, csv_data], ignore_index=True)
+        for ticker in csv_tickers:
+            if ticker.endswith("_prc.csv"):
+                ticker = ticker.split("_")[0]
+            ticker = ticker.lower()
+            pth = os.path.join(cfg.DATADIR, f"{ticker}_prc.csv")
+            df_list.append(read_csv(pth, ticker, prc_col))
 
-    # Remove all duplicates, prioritising CSV data
-    all_data = all_data.drop_duplicates(subset=['ticker',prc_coll], keep='first')
+    # Process DAT files
+    if dat_files:
+        for dat_name in dat_files:
+            if dat_name.endswith(".dat"):
+                dat_name = dat_name.split(".")[0]
+            dat_name = dat_name.lower()
+            pth = os.path.join(cfg.DATADIR, f"{dat_name}.dat")
+            df_list.append(read_dat(prc, prc_col))
 
-    # Select relevant columns
-    all_data = all_data[['date', 'ticker', prc_col]]
-    all_data = all_data.rename(columns={prc_col: 'price'})
-
-    return all_data
-
+    # Combine all dataframes and drop duplicates
+    return pd.concat(df_list).drop_duplicates(subset=['ticker', prc_col], keep='first')
 
     pass
 
