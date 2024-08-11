@@ -80,21 +80,24 @@ def read_dat(pth, prc_col: str = "adj_close"):
 
             if row:
                 insert = TEMPLATE.copy()
-                for i, k in enumerate(insert.keys()):
+                for i, k in enumerate(insert):
+                    print(i, k)
                     insert[k] = row[i].strip('\'\" ')
 
                 insert["Ticker"] = str(insert["Ticker"])
                 insert["Volume"] = float(insert["Volume"])
-                insert["Adj Close"] = float(insert["Adj Close"])
-                insert["Close"] = float(insert["Close"])
                 insert["Open"] = float(insert["Open"])
+                insert["Close"] = float(insert["Close"])
                 insert["High"] = float(insert["High"])
+                insert["Low"] = float(insert["Low"])
+                insert["Adj Close"] = float(insert["Adj Close"])
                 insert["Date"] = pd.to_datetime(insert["Date"])
                 rtn_data.append(insert)
 
     df = pd.DataFrame(rtn_data)
     rename_cols(df, prc_col)
     return_df = df[["ticker", "date", "price"]]
+    df = df[df.price > 0]
     return return_df
 
 def read_csv(pth, ticker: str, prc_col: str = "adj_close"):
@@ -212,22 +215,27 @@ def calc_monthly_ret_and_vol(df: pd.DataFrame):
     """
     df['date'] = pd.to_datetime(df['date'])
     df.set_index('date', inplace=True)
+    df.sort_index(inplace=True)
 
     monthly_stats = []
 
-    for ticker, ticker_df in df.groupby("ticker"):
-        monthly_prices = ticker_df['price'].resample('ME').last()
-        monthly_returns = monthly_prices.pct_change().dropna()
+    # Group by ticker to perform operation for each stock separately
+    for ticker, group_df in df.groupby('ticker'):
+        group_df['ret'] = group_df['price'].pct_change()
 
-        daily_returns = ticker_df['price'].pct_change().dropna()
-        monthly_volatility = daily_returns.resample('ME').std() * np.sqrt(21)
-
+        monthly_returns = group_df['price'].resample(rule='MS').last().pct_change()
+        
+        monthly_volatility = group_df['ret'].groupby(group_df.index.to_period('M')).std() * np.sqrt(21)
+        
+        if ticker == 'GE':
+            print(group_df['ret'].groupby(group_df.index.to_period('M')))
+        
         for date in monthly_returns.index:
             monthly_stats.append({
                 "mdate": date.strftime("%Y-%m"),
                 "ticker": ticker.upper(),
                 "mret": monthly_returns[date],
-                "mvol": monthly_volatility.loc[date]
+                "mvol": monthly_volatility[date]
             })
 
     return pd.DataFrame(monthly_stats)
