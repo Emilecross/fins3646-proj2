@@ -56,48 +56,63 @@ def read_dat(pth, prc_col: str = "adj_close"):
         1   ticker   
         2   price    
     """
-    rtn_data: list[dict[str, Any]] = []
-    template = {
-        "Ticker": "TMP",
-        "Volume": 14,
-        "Date": "01-01-2001",
-        "Adj Close": 19,
-        "Close": 10,
-        "Open": 6,
-        "High": 20
-    }
+    rtn_data = []
+    template = {"Ticker": "TMP",
+                'Volume': 14,
+                'Open': 6,
+                'Close': 10,
+                'High': 20,
+                'Low': 20,
+                'Adj Close': 19,
+                'Date': "01-01-2001"}
 
     with open(pth) as tic_data:
+        first = True
         for data_point in tic_data:
+            if first:
+                first = False
+                continue
+
             row = None
-            if len(data_point.split(",")) == 7:
+            if len(data_point.split(",")) == 8:
                 row = data_point.split(",")
-            elif len(data_point.split("\t")) == 7:
+            elif len(data_point.split("\t")) == 8:
                 row = data_point.split("\t")
-            elif len(data_point.split(" ")) == 7:
+            elif len(data_point.split(" ")) == 8:
                 row = data_point.split(" ")
 
             if row:
-                insert = template.copy()  # Here, template is being used
-                for k, v in zip(insert.keys(), row):
-                    insert[k] = v.strip('"\'')
+                insert = template.copy()
+                for i, k in enumerate(insert.keys()):
+                    insert[k] = row[i].strip('\'\" ')
 
-                    if k in ["Volume", "Adj Close", "Close", "Open", "High"]:
-                        # Convert to float if it's a valid numeric string
-                        if insert[k].replace('.', '', 1).isdigit():
-                            insert[k] = float(insert[k])
-
-                    elif k == "Date":
-                        # Convert to datetime
-                        insert[k] = pd.to_datetime(insert[k]) if isinstance(insert[k], str) else insert[k]
-
+                insert["Ticker"] = str(insert["Ticker"])
+                insert["Volume"] = float(insert["Volume"])
+                insert["Adj Close"] = float(insert["Adj Close"])
+                insert["Close"] = float(insert["Close"])
+                insert["Open"] = float(insert["Open"])
+                insert["High"] = float(insert["High"])
+                insert["Date"] = pd.to_datetime(insert["Date"])
                 rtn_data.append(insert)
 
-    # Construct DataFrame
     df = pd.DataFrame(rtn_data)
-    rename_cols(df, prc_col)
-
+    check_column_dtypes(df)
     return df
+def check_column_dtypes(df):
+    print("Column Data Types:")
+    print(df.dtypes)
+
+df = read_dat('/Users/licawu/PycharmProjects/Assessments2/project2/data/data1.dat')
+
+
+def check_column_dtypes(df):
+    # Display the data types of each column
+    print(df.dtypes)
+
+
+if __name__ == '__main__':
+    df = pd.read.csv('data1.dat')
+    check_column_dtypes(df)
 
 
 def read_csv(pth, ticker: str, prc_col: str = "adj_close"):
@@ -304,5 +319,6 @@ def test_step_1_2():
 
 if __name__ == "__main__":
     # calc_monthly_ret_and_vol(read_files(csv_tickers=["tsla"], dat_files=["data1"])).to_csv(os.path.join(
-    # cfg.DATADIR,'res.csv'),index=False) test_step_1_2()
+    # cfg.DATADIR, 'res.csv'), index=False)
+    # test_step_1_2()
     pass
