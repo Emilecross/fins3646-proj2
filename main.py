@@ -175,7 +175,7 @@ def read_files(
             pth = os.path.join(cfg.DATADIR ,f"{dat_name}.dat")
             df_list.append(read_dat(pth, prc_col))
 
-    return pd.concat(df_list).drop_duplicates()
+    return pd.concat(df_list).drop_duplicates(subset=['date', 'ticker'])
 
 
 def calc_monthly_ret_and_vol(df: pd.DataFrame):
