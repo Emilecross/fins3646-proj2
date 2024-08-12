@@ -263,12 +263,11 @@ def main(
     The function should print the summary results of a linear regression provided by
     the statsmodels package.
     """
-    pass
-
-def test_step_1_2():
-    result = pd.read_csv(os.path.join(cfg.DATADIR, 'res.csv')).equals(pd.read_csv(os.path.join(cfg.DATADIR, 'sample.csv')))
-    print(f'Dataframes are the same: {result}')
+    monthly_data = calc_monthly_ret_and_vol(read_files(csv_tickers, dat_files, prc_col))
+    monthly_data['mvol_lagged'] = monthly_data.groupby('ticker')['mvol'].shift(1)
+    monthly_data.dropna(inplace=True)
+    model = smf.ols(formula='mret ~ mvol_lagged', data=monthly_data).fit()
+    print(model.summary())
 
 if __name__ == "__main__":
-    calc_monthly_ret_and_vol(read_files(csv_tickers=["tsla"], dat_files=["data1"])).to_csv(os.path.join(cfg.DATADIR, 'res.csv'), index=False)
-    # test_step_1_2()
+    main(csv_tickers=["tsla"], dat_files=["data1"])
