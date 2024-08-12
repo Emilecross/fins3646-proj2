@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
+from datetime import datetime
 
 # from project2 import config as cfg
 # from project2 import util
@@ -58,13 +59,13 @@ def read_dat(pth, prc_col: str = "adj_close"):
     """
     rtn_data = []
     template = {"Ticker": "TMP",
-                'Volume': 14,
-                'Open': 6,
-                'Close': 10,
-                'High': 20,
-                'Low': 20,
-                'Adj Close': 19,
-                'Date': "01-01-2001"}
+                'Volume': 14.0,
+                'Open': 6.0,
+                'Close': 10.0,
+                'High': 20.0,
+                'Low': 20.0,
+                'Adj Close': 19.0,
+                'Date': datetime(year=2001, month=1, day=1)}
 
     with open(pth) as tic_data:
         first = True
@@ -83,8 +84,8 @@ def read_dat(pth, prc_col: str = "adj_close"):
 
             if row:
                 insert = template.copy()
-                for i, k in enumerate(insert.keys()):
-                    insert[k] = row[i].strip('\'\" ')
+                for i, k in enumerate(insert):
+                    insert[k] = row[i].strip('\\" ')
 
                 insert["Ticker"] = str(insert["Ticker"])
                 insert["Volume"] = float(insert["Volume"])
@@ -92,27 +93,14 @@ def read_dat(pth, prc_col: str = "adj_close"):
                 insert["Close"] = float(insert["Close"])
                 insert["Open"] = float(insert["Open"])
                 insert["High"] = float(insert["High"])
+                insert["Low"] = float(insert["Low"])
                 insert["Date"] = pd.to_datetime(insert["Date"])
                 rtn_data.append(insert)
 
     df = pd.DataFrame(rtn_data)
-    check_column_dtypes(df)
-    return df
-def check_column_dtypes(df):
-    print("Column Data Types:")
-    print(df.dtypes)
-
-df = read_dat('/Users/licawu/PycharmProjects/Assessments2/project2/data/data1.dat')
-
-
-def check_column_dtypes(df):
-    # Display the data types of each column
-    print(df.dtypes)
-
-
-if __name__ == '__main__':
-    df = pd.read.csv('data1.dat')
-    check_column_dtypes(df)
+    rename_cols(df, prc_col)
+    return_df = df[["ticker", "date", "price"]]
+    return return_df
 
 
 def read_csv(pth, ticker: str, prc_col: str = "adj_close"):
@@ -177,10 +165,10 @@ def read_files(
     # Read CSV files
     if csv_tickers:
         for ticker in csv_tickers:
-            if ticker.endswith("_prc.csv"):
+            if ticker.endswith(".csv"):
                 ticker = ticker.split("_")[0]
             ticker = ticker.lower()
-            pth = os.path.join(cfg.DATADIR, f"{ticker}_prc.csv")
+            pth = os.path.join(cfg.DATADIR, f"{ticker}.csv")
             df_list.append(read_csv(pth, ticker, prc_col))
 
     # Process DAT files
@@ -193,7 +181,7 @@ def read_files(
             df_list.append(read_dat(pth, prc_col))
 
     # Combine all dataframes and drop duplicates
-    return pd.concat(df_list).drop_duplicates(subset=['ticker', prc_col], keep='first')
+    return pd.concat(df_list).drop_duplicates(subset=['ticker', 'date'], keep='first')
 
     pass
 
@@ -242,6 +230,7 @@ def calc_monthly_ret_and_vol(df):
     """
     df['date'] = pd.to_datetime(df['date'])
     df.set_index('date', inplace=True)
+    df.sort_index(inplace=True)
 
     monthly_stats = []
 
