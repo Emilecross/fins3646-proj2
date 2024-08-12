@@ -56,13 +56,13 @@ def read_dat(pth, prc_col: str = "adj_close"):
     """
     rtn_data = []
     TEMPLATE = {"Ticker": "TMP",
-                'Volume': 14,
-                'Open': 6,
-                'Close': 10,
-                'High': 20,
-                'Low': 20,
-                'Adj Close': 19,
-                'Date': "01-01-2001"}
+                'Volume': 14.0,
+                'Open': 6.0,
+                'Close': 10.0,
+                'High': 20.0,
+                'Low': 20.0,
+                'Adj Close': 19.0,
+                'Date': pd.to_datetime("2001-01-01")}
     with open(pth) as tic_data:
         first = True
         for data_point in tic_data:
